@@ -10,11 +10,33 @@ class ReferrerInine(admin.TabularInline):
 
 class CampaignAdmin(admin.ModelAdmin):
     list_display = ('name', 'count_users')
+    prepopulated_fields = {"slug": ["name"]}
+
+    fieldsets = [
+        (None, {'fields': ['name', 'description', 'pattern', 'page', 'state']}),
+        ('Additional Information', {
+            'classes': ('collapse',),
+            'fields': ['slug', 'created', 'updated', 'updated_by', 'created_by']
+        }),
+    ]
+
+    readonly_fields = ('id', 'created', 'updated', 'updated_by', 'created_by')
+    radio_fields = {'state': admin.HORIZONTAL}
+
     inlines = (ReferrerInine, )
+
+    def save_form(self, request, form, change):
+        f = super(CampaignAdmin, self).save_form(request, form, change)
+        if not f.pk:
+            f.created_by = request.user
+        else:
+            f.updated_by = request.user
+
+        return f
 
 
 class ReferrerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'campaign', 'creation_date', 'count_users')
+    list_display = ('name', 'campaign', 'created', 'count_users')
 
 
 class UserReferrerAdmin(admin.ModelAdmin):

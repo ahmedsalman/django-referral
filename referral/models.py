@@ -3,13 +3,24 @@ from django.utils.translation import ugettext_lazy as _
 
 from .compat import User
 from . import settings
-
+from articles.constants import STATE_TYPES
+from pages.models import Page
 
 class Campaign(models.Model):
-    name = models.CharField(_("Name"), max_length=255, unique=True)
+    slug = models.SlugField(verbose_name=_('Slug'), unique=True)
+    name = models.CharField(_("Name"), max_length=255)
+    page = models.ForeignKey(Page, verbose_name=_("Page"), related_name='campaign_pages')
     description = models.TextField(_("Description"), blank=True, null=True)
     pattern = models.CharField(_("Referrer pattern"), blank=True, max_length=255,
         help_text="All auto created referrers containing this pattern will be associated with this campaign")
+
+    state = models.SmallIntegerField(verbose_name=_('Publish state'), choices=STATE_TYPES, default=1)
+
+    created = models.DateTimeField(verbose_name=_('Creation date'), auto_now_add=True, editable=False)
+    created_by = models.ForeignKey(User, related_name="campaign_created_by")
+
+    updated = models.DateTimeField(verbose_name=_('Update date'), auto_now=True, editable=False)
+    updated_by = models.ForeignKey(User, related_name="campaign_updated_by", null=True, blank=True)
 
     class Meta:
         ordering = ['name']
@@ -31,10 +42,17 @@ class Campaign(models.Model):
 
 
 class Referrer(models.Model):
-    name = models.CharField(_("Name"), max_length=255, unique=True)
+    name = models.CharField(_("Name"), max_length=255)                                      #user.username + pattern
     description = models.TextField(_("Description"), blank=True, null=True)
-    creation_date = models.DateTimeField(_("Creation date"), auto_now_add=True)
     campaign = models.ForeignKey(Campaign, verbose_name=_("Campaign"), related_name='referrers', blank=True, null=True)
+
+    state = models.SmallIntegerField(verbose_name=_('Publish state'), choices=STATE_TYPES, default=1)
+
+    created = models.DateTimeField(verbose_name=_('Creation date'), auto_now_add=True, editable=False)
+    created_by = models.ForeignKey(User, related_name="referrer_created_by")
+
+    updated = models.DateTimeField(verbose_name=_('Update date'), auto_now=True, editable=False)
+    updated_by = models.ForeignKey(User, related_name="referrer_updated_by", null=True, blank=True)
 
     class Meta:
         ordering = ['name']
@@ -51,12 +69,12 @@ class Referrer(models.Model):
         return self.users.count()
     count_users.short_description = _("User count")
 
-    def match_campaign(self):
-        for campaign in Campaign.objects.exclude(pattern=""):
-            if campaign.pattern in self.name:
-                self.campaign = campaign
-                self.save()
-                break
+    #def match_campaign(self):
+    #    for campaign in Campaign.objects.exclude(pattern=""):
+    #        if campaign.pattern in self.name:
+    #            self.campaign = campaign
+    #            self.save()
+    #            break
 
 
 class UserReferrerManager(models.Manager):
@@ -71,8 +89,8 @@ class UserReferrerManager(models.Manager):
 
 
 class UserReferrer(models.Model):
-    user = models.OneToOneField(User, verbose_name=_("User"), related_name='user_referrer')
-    referrer = models.ForeignKey(Referrer, verbose_name=_("Referrer"), related_name='users')
+    user = models.OneToOneField(User, verbose_name=_("User"), related_name='user_referrer')         #referrer receiver
+    referrer = models.ForeignKey(Referrer, verbose_name=_("Referrer"), related_name='users')        #referrer sender
 
     objects = UserReferrerManager()
 

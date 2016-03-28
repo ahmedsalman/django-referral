@@ -11,15 +11,16 @@ class ReferrerMiddleware():
                 return
             try:
                 if settings.CASE_SENSITIVE:
-                    referrer = Referrer.objects.get(name=referrer_name)
+                    referrer = Referrer.objects.filter(name=referrer_name)
                 else:
-                    referrer = Referrer.objects.get(name__iexact=referrer_name)
-            except Referrer.DoesNotExist:
-                if settings.AUTO_CREATE:
-                    referrer = Referrer(name=referrer_name)
-                    referrer.save()
-                if referrer is not None and settings.AUTO_ASSOCIATE:
-                    referrer.match_campaign()
+                    referrer = Referrer.objects.filter(name__iexact=referrer_name)
+
+                if referrer:
+                    referrer = referrer[0]
+                #else:
+                #    if settings.AUTO_CREATE:
+                #        referrer = Referrer(name=referrer_name)
+                #        referrer.save()
             finally:
                 if referrer is not None:
                     request.session[settings.SESSION_KEY] = referrer.pk
