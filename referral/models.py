@@ -2,9 +2,10 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from .compat import User
-from . import settings
+from django.conf import settings
 from articles.constants import STATE_TYPES
 from pages.models import Page
+from people.models import UserPoints
 
 class Campaign(models.Model):
     slug = models.SlugField(verbose_name=_('Slug'), unique=True)
@@ -76,7 +77,6 @@ class Referrer(models.Model):
     #            self.save()
     #            break
 
-
 class UserReferrerManager(models.Manager):
     def apply_referrer(self, user, request):
         try:
@@ -86,6 +86,12 @@ class UserReferrerManager(models.Manager):
         else:
             user_referrer = UserReferrer(user=user, referrer=referrer)
             user_referrer.save()
+
+            reference_created_by = referrer.created_by
+            user_point = UserPoints.objects.get(user=reference_created_by)
+            user_point.points += settings.REFERRER_POINTS
+            user_point.save()
+
 
 
 class UserReferrer(models.Model):
