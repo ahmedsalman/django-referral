@@ -1,15 +1,17 @@
 from django.contrib import admin
 
 from .models import Campaign, Referrer, UserReferrer
+from .forms import CampaignAdminForm, ReferrerInlineAdminForm
 
 
 class ReferrerInine(admin.TabularInline):
+    form = ReferrerInlineAdminForm
     model = Referrer
     extra = 0
 
 
 class CampaignAdmin(admin.ModelAdmin):
-    list_display = ('name', 'count_users')
+    list_display = ('name', 'page', 'count_referrer', 'count_users')
     prepopulated_fields = {"slug": ["name"]}
 
     fieldsets = [
@@ -23,6 +25,7 @@ class CampaignAdmin(admin.ModelAdmin):
     readonly_fields = ('id', 'created', 'updated', 'updated_by', 'created_by')
     radio_fields = {'state': admin.HORIZONTAL}
 
+    form = CampaignAdminForm
     inlines = (ReferrerInine, )
 
     def save_form(self, request, form, change):
@@ -37,6 +40,7 @@ class CampaignAdmin(admin.ModelAdmin):
 
 class ReferrerAdmin(admin.ModelAdmin):
     list_display = ('name', 'campaign', 'created', 'count_users')
+    form = ReferrerInlineAdminForm
 
 
 class UserReferrerAdmin(admin.ModelAdmin):

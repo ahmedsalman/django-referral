@@ -22,5 +22,5 @@ class ReferrerMiddleware():
                 #        referrer = Referrer(name=referrer_name)
                 #        referrer.save()
             finally:
-                if referrer is not None:
+                if referrer:
                     request.session[settings.SESSION_KEY] = referrer.pk

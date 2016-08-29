@@ -34,16 +34,20 @@ class Campaign(models.Model):
     def __str__(self):
         return self.__unicode__()
 
+    def count_referrer(self):
+        return Referrer.objects.filter(campaign=self).count()
+    count_referrer.short_description = _("Referrer count")
+
     def count_users(self):
         count = 0
         for referrer in self.referrers.all():
             count += referrer.count_users()
         return count
-    count_users.short_description = _("User count")
+    count_users.short_description = _("Signup User count")
 
 
 class Referrer(models.Model):
-    name = models.CharField(_("Name"), max_length=255)                                      #user.username + pattern
+    name = models.CharField(_("Name"), max_length=255, unique=True)                           #user.username + pattern
     description = models.TextField(_("Description"), blank=True, null=True)
     campaign = models.ForeignKey(Campaign, verbose_name=_("Campaign"), related_name='referrers', blank=True, null=True)
 
@@ -70,12 +74,6 @@ class Referrer(models.Model):
         return self.users.count()
     count_users.short_description = _("User count")
 
-    #def match_campaign(self):
-    #    for campaign in Campaign.objects.exclude(pattern=""):
-    #        if campaign.pattern in self.name:
-    #            self.campaign = campaign
-    #            self.save()
-    #            break
 
 class UserReferrerManager(models.Manager):
     def apply_referrer(self, user, request):
