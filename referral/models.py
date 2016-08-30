@@ -3,7 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from .compat import User
 from django.conf import settings
-from articles.constants import STATE_TYPES
+from general.constants import STATE_TYPES
 from pages.models import Page
 from people.models import UserPoints
 
